@@ -5,51 +5,61 @@ from datetime import datetime
 
 from graphqlclient import GraphQLClient
 
-client = GraphQLClient('https://asp.arubanetworks.com/graphql/')
+client = GraphQLClient("https://asp.arubanetworks.com/graphql/")
 
-query = '''
+query = """
 query FileIndexList($after: String, $first: Int, $filterBy: FileIndexFilterByInput, $orderBy: [FileIndexOrderBy!]) {
     entities: fileIndexes(after: $after, first: $first, filterBy: $filterBy, orderBy: $orderBy) {
-        edges { node { fileName } }
+        edges { node { fileName checksumMd5 } }
         totalCount
     }
 }
-'''
+"""
 
 
 def get_files():
     records = -1
     step = 100
-    order_by = ["RELEVANCE", "RELEASEDATE_DESC"]
     filter_by = {
         "active": True,
         "visible": True,
-        "releaseDate_lte": datetime.now().isoformat() + 'Z',
+        "releaseDate_lte": datetime.now().isoformat() + "Z",
         "fileTypes": ["SOFTWARE"],
         "products": ["Aruba Access Points"],
         "fileContents": ["Software"],
-        "softwareReleaseTypes": ["Standard"]
+        "softwareReleaseTypes": ["Standard"],
     }
     while True:
-        result = json.loads(client.execute(query, variables={
+        variables = {
             "after": base64.b64encode(b"arrayconnection:%d" % records).decode(),
             "first": step,
-            "orderBy": order_by,
+            "orderBy": ["RELEVANCE", "RELEASEDATE_DESC"],
             "filterBy": filter_by,
-        }))
-        entities = result['data']['entities']
-        total_count = entities['totalCount']
+        }
+        result = json.loads(client.execute(query, variables))
+        entities = result["data"]["entities"]
+        total_count = entities["totalCount"]
         records += step
-        for edge in entities['edges']:
-            yield edge['node']['fileName']
+        for edge in entities["edges"]:
+            yield edge["node"]
         if records >= total_count:
-            return
+            break
+        print("Progress: %3.2f%%" % ((records / total_count) * 100))
+    print("Progress: 100.00%")
 
 
 def main():
-    for name in get_files():
-        print('https://d2vxf1j0rhr3p0.cloudfront.net/fwfiles/%s' % name)
+    with open("firmware.txt", "w") as fp:
+        for name in get_files():
+            lines = [
+                "https://d2vxf1j0rhr3p0.cloudfront.net/fwfiles/%(fileName)s" % name,
+                "checksum=md5=%(checksumMd5)s" % name,
+                "out=aruba-firmware/%(fileName)s" % name,
+            ]
+            fp.write("\n\t".join(lines))
+            fp.write("\n")
+            fp.flush()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
