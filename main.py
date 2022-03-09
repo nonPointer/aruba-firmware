@@ -52,7 +52,7 @@ def get_files():
 def main():
     input_file = "firmware.txt"
     with open(input_file, "w") as fp:
-        fp.write("#!aria2c --continue=true --input-file\n")
+        fp.write("#!aria2c -c -i\n")
         for name in get_files():
             lines = [
                 "https://d2vxf1j0rhr3p0.cloudfront.net/fwfiles/%(fileName)s" % name,
