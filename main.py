@@ -52,10 +52,16 @@ def get_files():
 def main():
     input_file = "firmware.txt"
     with open(input_file, "w") as fp:
-        fp.write("#!aria2c -c -i\n")
+        fp.write("#!aria2c -i\n")
         for name in get_files():
             lines = [
                 "https://d2vxf1j0rhr3p0.cloudfront.net/fwfiles/%(fileName)s" % name,
+                "continue=true",
+                "remote-time=true",
+                "split=32",
+                "max-tries=0",
+                "max-connection-per-server=16",
+                "min-split-size=2M",
                 "checksum=md5=%(checksumMd5)s" % name,
                 "out=aruba-firmware/%(fileName)s" % name,
             ]
