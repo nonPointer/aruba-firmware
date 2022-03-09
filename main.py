@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import base64
 import json
+import os
 from datetime import datetime
 
 from graphqlclient import GraphQLClient
@@ -49,16 +50,20 @@ def get_files():
 
 
 def main():
-    with open("firmware.txt", "w") as fp:
+    input_file = "firmware.txt"
+    with open(input_file, "w") as fp:
+        fp.write("#!/usr/bin/env aria2c -i\n")
         for name in get_files():
             lines = [
                 "https://d2vxf1j0rhr3p0.cloudfront.net/fwfiles/%(fileName)s" % name,
+                "continue=true"
                 "checksum=md5=%(checksumMd5)s" % name,
                 "out=aruba-firmware/%(fileName)s" % name,
             ]
             fp.write("\n\t".join(lines))
             fp.write("\n")
             fp.flush()
+    os.chmod(input_file, 0o755)
 
 
 if __name__ == "__main__":
