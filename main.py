@@ -52,11 +52,10 @@ def get_files():
 def main():
     input_file = "firmware.txt"
     with open(input_file, "w") as fp:
-        fp.write("#!/usr/bin/env aria2c -i\n")
+        fp.write("#!aria2c --continue=true --input-file\n")
         for name in get_files():
             lines = [
                 "https://d2vxf1j0rhr3p0.cloudfront.net/fwfiles/%(fileName)s" % name,
-                "continue=true"
                 "checksum=md5=%(checksumMd5)s" % name,
                 "out=aruba-firmware/%(fileName)s" % name,
             ]
